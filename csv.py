@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="CSV Data Explorer", layout="wide")
+st.set_page_config(page_title="CSV Data Explorer/Discovery", layout="wide")
 
 st.title("📊 CSV Data Explorer")
 
