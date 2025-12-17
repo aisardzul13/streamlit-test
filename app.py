@@ -1,44 +1,85 @@
 import streamlit as st
 
-# Page config
 st.set_page_config(
-    page_title="Interactive Streamlit App",
-    page_icon="🚀",
+    page_title="5-Year Life Planner",
+    page_icon="🌱",
     layout="centered"
 )
 
-st.title("🚀 My Interactive Streamlit App")
-st.write("A simple app to demonstrate Streamlit features.")
+st.title("🌱 5-Year Life Planner")
+st.write("Answer a few questions and get a simple roadmap for the next 5 years.")
 
-# Sidebar
-st.sidebar.header("User Info")
+# Sidebar inputs
+st.sidebar.header("About You")
+
 name = st.sidebar.text_input("Your name")
 age = st.sidebar.number_input("Your age", min_value=0, max_value=120, step=1)
+career = st.sidebar.text_input("Current career / field")
+location = st.sidebar.selectbox(
+    "Where do you live?",
+    ["Malaysia", "Singapore", "Other Asia", "Europe", "Middle East", "US / Canada", "Other"]
+)
+dream = st.sidebar.text_area(
+    "What is your biggest dream?",
+    placeholder="e.g. Become a senior data scientist, start a business, financial freedom..."
+)
 
 st.divider()
 
-# Main content
-if name:
-    st.subheader(f"Hello, {name} 👋")
+# Main logic
+if name and career and dream:
+    st.subheader(f"Hello {name} 👋")
+    st.write(f"You are **{age}** years old, working in **{career}**, based in **{location}**.")
 
-    if age < 18:
-        st.info("You are under 18. Keep learning and exploring!")
-    elif age < 30:
-        st.success("Great age to build skills and your career 🚀")
+    st.divider()
+    st.subheader("🎯 Your 5-Year Outlook")
+
+    # Age-based guidance
+    if age < 25:
+        focus = "exploring, learning fast, and building strong foundations"
+    elif age < 35:
+        focus = "career acceleration, specialization, and financial growth"
     else:
-        st.warning("Experience is your superpower 💡")
+        focus = "leadership, stability, and long-term impact"
 
-    # Button interaction
-    if st.button("Analyze profile"):
-        st.write("Analyzing your profile...")
+    st.write(f"Based on your age, the next 5 years should focus on **{focus}**.")
 
-        progress = st.progress(0)
-        for i in range(100):
-            progress.progress(i + 1)
+    # 5-year plan
+    st.subheader("🗺️ Suggested 5-Year Plan")
 
-        st.success("Analysis complete!")
+    st.markdown("""
+    **Year 1–2**
+    - Deepen skills related to your career
+    - Build strong projects and practical experience
+    - Improve communication and problem-solving skills
 
-        st.metric(label="Learning Score", value="85%", delta="+5%")
+    **Year 3–4**
+    - Move into more senior or specialized roles
+    - Increase income and financial discipline
+    - Start mentoring or leading small initiatives
+
+    **Year 5**
+    - Align your career directly with your dream
+    - Aim for leadership, independence, or major life milestones
+    - Reassess goals and design the next chapter
+    """)
+
+    st.divider()
+
+    st.subheader("💭 Your Dream")
+    st.write(f"**“{dream}”**")
+
+    st.success(
+        "If you stay consistent, disciplined, and curious, this dream is achievable within the next 5 years."
+    )
+
+    # Call to action
+    if st.button("Generate Motivation"):
+        st.balloons()
+        st.write(
+            f"🚀 {name}, small progress every day beats motivation. "
+            "Focus on systems, not pressure."
+        )
 
 else:
-    st.write("👈 Enter your details in the sidebar to get started.")
+    st.info("👈 Fill in all the details in the sidebar to generate your 5-year plan.")
