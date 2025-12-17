@@ -1,5 +1,7 @@
 import streamlit as st
 import random
+import requests
+from datetime import datetime
 
 # Page configuration
 st.set_page_config(
@@ -8,127 +10,131 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for a premium look
+# Custom CSS
 st.markdown("""
     <style>
-    .main {
-        background-color: #f8f9fa;
-    }
+    .main { background-color: #f8f9fa; }
     .stButton>button {
-        width: 100%;
-        border-radius: 25px;
-        height: 3.5em;
-        background-color: #FF4B4B;
-        color: white;
-        font-weight: bold;
-        border: none;
-        transition: 0.3s;
+        width: 100%; border-radius: 25px; height: 3.5em;
+        background-color: #FF4B4B; color: white; font-weight: bold;
+        border: none; transition: 0.3s;
     }
-    .stButton>button:hover {
-        background-color: #ff3333;
-        border: none;
-        color: white;
+    .stButton>button:hover { background-color: #ff3333; color: white; }
+    .weather-box {
+        padding: 15px; border-radius: 15px; background: #ffffff;
+        border-left: 5px solid #FF4B4B; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🚀 Visionary 2030: Your 5-Year Blueprint")
-st.write("Stop dreaming in circles. Let's map out your trajectory for the next 60 months.")
+# --- HELPER FUNCTIONS ---
+def get_weather(state):
+    # Mapping Malaysian states to approximate lat/lon for Open-Meteo API
+    coords = {
+        "Selangor": (3.07, 101.51), "W.P. Kuala Lumpur": (3.13, 101.68),
+        "Johor": (1.48, 103.74), "Pulau Pinang": (5.41, 100.32),
+        "Sabah": (5.97, 116.07), "Sarawak": (1.55, 110.33),
+        "Kedah": (6.12, 100.36), "Kelantan": (6.12, 102.23),
+        "Melaka": (2.18, 102.24), "Negeri Sembilan": (2.72, 101.94),
+        "Pahang": (3.81, 103.32), "Perak": (4.59, 101.09),
+        "Perlis": (6.44, 100.20), "Terengganu": (5.33, 103.13),
+        "W.P. Labuan": (5.28, 115.24), "W.P. Putrajaya": (2.92, 101.68)
+    }
+    lat, lon = coords.get(state, (3.13, 101.68))
+    try:
+        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=True"
+        data = requests.get(url).json()
+        temp = data['current_weather']['temperature']
+        code = data['current_weather']['weathercode']
+        # Simple weather code mapping
+        condition = "Sunny" if code == 0 else "Cloudy" if code < 51 else "Raining"
+        return f"{temp}°C", condition
+    except:
+        return "N/A", "Unknown"
 
-# --- SIDEBAR INPUTS ---
+# --- SIDEBAR ---
 st.sidebar.header("👤 Personal Profile")
-name = st.sidebar.text_input("What should we call you?", placeholder="e.g. Aisar")
-age = st.sidebar.number_input("Current Age", min_value=0, max_value=120, value=25)
-career = st.sidebar.text_input("Current Field / Industry", placeholder="e.g. Software Engineering")
+name = st.sidebar.text_input("Name", placeholder="e.g. Aisar")
+age = st.sidebar.number_input("Age", min_value=0, max_value=120, value=25)
+career = st.sidebar.text_input("Industry", placeholder="e.g. Tech")
 
-# Malaysian States
-malaysian_states = [
-    "Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", 
-    "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", 
-    "Terengganu", "W.P. Kuala Lumpur", "W.P. Labuan", "W.P. Putrajaya"
-]
-location = st.sidebar.selectbox("Where are you based?", options=sorted(malaysian_states))
+malaysian_states = ["Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "W.P. Kuala Lumpur", "W.P. Labuan", "W.P. Putrajaya"]
+location = st.sidebar.selectbox("Location", options=sorted(malaysian_states))
 
-st.sidebar.divider()
-dream = st.sidebar.text_area(
-    "Describe your ultimate 5-year goal:",
-    placeholder="e.g. To become a lead developer, own a home in Selangor, and have a side business generating RM5k monthly..."
-)
+dream = st.sidebar.text_area("Your 5-Year Goal")
+
+# --- TOP SECTION: DATE, TIME & WEATHER ---
+now = datetime.now()
+current_time = now.strftime("%H:%M")
+current_date = now.strftime("%A, %d %B %Y")
+temp, condition = get_weather(location)
+
+# Dynamic Greeting
+hour = now.hour
+if hour < 12: greeting = "Selamat Pagi ☀️"
+elif hour < 17: greeting = "Selamat Tengahari 🌤️"
+else: greeting = "Selamat Malam 🌙"
+
+# Header Layout
+t1, t2 = st.columns([2, 1])
+with t1:
+    st.title(f"{greeting}, {name if name else 'Visionary'}!")
+    st.subheader("🚀 Visionary 2030: Your 5-Year Blueprint")
+with t2:
+    st.markdown(f"""
+    <div class="weather-box">
+        <b>📅 {current_date}</b><br>
+        <b>⏰ Local Time: {current_time}</b><br>
+        <b>🌡️ {location}: {temp} ({condition})</b>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.divider()
 
 # --- MAIN LOGIC ---
 if name and career and dream:
     col1, col2 = st.columns([1, 1], gap="large")
 
     with col1:
-        st.subheader(f"✨ The Profile: {name}")
-        st.info(f"📍 Based in **{location}** | 🛠️ Industry: **{career}**")
-        
-        # Dynamic Life Stage Logic
+        st.subheader("🎯 Strategic Focus")
         if age < 25:
-            focus_title = "The Foundation & Exploration Phase"
-            focus_desc = "Now is the time for 'Aggressive Learning.' Since you are under 25, your goal is to build a massive skill-stack. Don't worry about being a specialist yet; be a polymath. Try new technologies, join networking events in KL, and fail as often as possible while the stakes are low."
+            focus = "The Foundation Phase: Focus on 'Skill-Stacking' and networking in KL."
         elif age < 40:
-            focus_title = "The Acceleration & Mastery Phase"
-            focus_desc = "You are in the 'Wealth Creation' window. Focus on deep-work and becoming a top-tier expert in your field. This phase is about leverage—using your network in Malaysia and your technical expertise to move from an individual contributor to a leader or business owner."
+            focus = "The Acceleration Phase: Build deep expertise and lead projects."
         else:
-            focus_title = "The Legacy & System Phase"
-            focus_desc = "Focus on 'Life Optimization.' Your 5-year goal should center on building systems that provide both financial freedom and time flexibility. At this stage, your experience is your greatest asset; consider mentoring, consulting, or investing in the next generation."
-
-        st.markdown(f"### 🎯 Strategic Focus: \n**{focus_title}**")
-        st.write(focus_desc)
+            focus = "The Legacy Phase: Optimize systems and mentor the next generation."
+        st.info(focus)
+        st.write(f"Today is a great day to work on this, given the {condition.lower()} weather in {location}!")
 
     with col2:
         st.subheader("💭 The North Star")
         st.success(f"**“{dream}”**")
-        st.write("This vision is your 'Why.' Every hard morning and late night over the next 5 years is an investment in making this specific sentence your reality.")
 
     st.divider()
 
-    # --- EXPANDED 5-YEAR PLAN ---
+    # --- ROADMAP ---
     st.header("🗺️ Your Detailed 60-Month Roadmap")
-    
-    with st.expander("📅 Years 1–2: Mastery and Market Positioning", expanded=True):
-        st.markdown(f"""
-        * **Skill Audit:** Conduct a deep audit of the skills required for **"{dream}"**. Spend the first 12 months filling those gaps through certifications or project-based learning.
-        * **Network Injection:** Don't just work in {location}; connect with it. Find 3 mentors who are 5 years ahead of where you want to be. 
-        * **Personal Branding:** Start documenting your journey. Whether it's LinkedIn or a personal blog, make sure that by the end of Year 2, people in the **{career}** industry know who you are.
-        * **Financial Foundation:** Automate your savings. If your goal requires capital, start a dedicated 'Vision Fund' today.
-        """)
+    with st.expander("📅 Years 1–2: Mastery", expanded=True):
+        st.write(f"Focus on becoming a top performer in **{career}**. Start building your 'Vision Fund' and find 3 mentors.")
+    with st.expander("📅 Years 3–4: Scaling"):
+        st.write(f"Transition to leadership. Your goal is to make **{dream}** 50% of your daily reality.")
+    with st.expander("📅 Year 5: Realization"):
+        st.write(f"The 'Big Leap'. Execute your master plan and look back at your progress since {now.year}.")
 
-    with st.expander("📅 Years 3–4: Scaling and Authority"):
-        st.markdown(f"""
-        * **Transition to Leadership:** Move from execution to strategy. Seek out roles that require managing people, budgets, or complex systems.
-        * **Income Diversification:** If your dream involves financial freedom, Year 3 is when you should launch a secondary income stream or a side-hustle that complements your career in **{career}**.
-        * **Lifestyle Design:** Begin aligning your daily environment with your goal. If you want to live elsewhere or travel, start testing 'work-from-anywhere' setups or negotiating flexible terms.
-        * **The 80/20 Rule:** Identify the 20% of your efforts producing 80% of your progress toward **"{dream}"** and double down on them.
-        """)
-
-    with st.expander("📅 Year 5: Realization and Transition"):
-        st.markdown(f"""
-        * **The Leap:** This is the year you execute the "Main Event"—whether that's quitting your job to start a business, buying that property in {location}, or stepping into a C-suite role.
-        * **Audit and Reflection:** Look back at your profile from Year 1. You will likely find that you have surpassed your original expectations.
-        * **Sustainability:** Ensure that the success you've built is sustainable. Focus on health, mental well-being, and family to ensure you can enjoy the fruits of your 5-year labor.
-        * **Next Horizon:** By the end of this year, draft your 'Vision 2035' plan. Growth never stops!
-        """)
-
-    # --- EXTENDED MOTIVATION ---
+    # --- MOTIVATION ---
     st.divider()
-    if st.button("🔥 Generate High-Octane Motivation 🔥"):
+    if st.button("🔥 Ignite My Motivation 🔥"):
         st.balloons()
-        
-        motivations = [
-            f"Listen closely, {name}. The next 1,825 days are going to pass regardless of whether you are working toward your dream or just watching the clock. In five years, you will be {age + 5} years old. You can either be {age + 5} with the life you described—'{dream}'—or you can be {age + 5} with a list of excuses. {location} is full of people waiting for 'the right time.' There is no right time. There is only right now. Build the life you won't need a vacation from.",
-            f"Hey {name}, success in the {career} industry isn't about luck; it's about being the most prepared person in the room when opportunity knocks. You have a vision that most people are too scared to even write down. That alone puts you ahead. Stop looking for permission to be great. The version of you that achieves '{dream}' is already inside you—they are just waiting for you to start acting like them. Get to work.",
-            f"The transition from where you are in {location} to where you want to be in 5 years is paved with 'boring' consistency. It's the early mornings, the extra courses, and the networking calls when you'd rather be sleeping. {name}, you aren't working this hard just to be 'average.' You are building a legacy. When you feel like quitting, remember that the pain of discipline is far lighter than the pain of regret."
+        msgs = [
+            f"Listen {name}, it's {current_time} on a {now.strftime('%A')}. Most people are scrolling; you are planning. That alone makes you dangerous. Don't stop.",
+            f"The {condition.lower()} weather in {location} today is just a backdrop. Your internal fire for '{dream}' is what matters. Get to work.",
+            f"Five years from now, you will arrive. The question is: Where? Stick to this plan and you'll arrive exactly where you want to be."
         ]
-        
-        st.markdown(f"### ⚡ A Message for the Future {name}:")
-        st.write(random.choice(motivations))
-        st.caption("You have the plan. You have the tools. Now, you just need the courage to follow through.")
+        st.markdown(f"### ⚡ Message:")
+        st.write(random.choice(msgs))
 
 else:
-    st.warning("👈 Please fill out your profile and your dream in the sidebar to generate your 5-year roadmap!")
+    st.warning("👈 Enter your details in the sidebar to begin!")
 
-# Footer
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: grey;'>Built for the dreamers of Malaysia 🇲🇾 | Stay Disciplined. Stay Visionary.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Built for Malaysian Dreamers 🇲🇾</p>", unsafe_allow_html=True)
