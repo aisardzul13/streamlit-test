@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS with Fixed Font Color
+# Custom CSS for a professional, readable UI
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -19,21 +19,27 @@ st.markdown("""
         background-color: #FF4B4B; color: white; font-weight: bold;
         border: none; transition: 0.3s;
     }
-    .stButton>button:hover { background-color: #ff3333; color: white; }
+    .stButton>button:hover { background-color: #ff3333; color: white; box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.4); }
     
-    /* Fixed the visibility here by adding a dark text color */
     .weather-box {
-        padding: 15px; 
+        padding: 20px; 
         border-radius: 15px; 
         background-color: #ffffff;
-        color: #31333F; 
+        color: #1E1E1E; 
         border-left: 5px solid #FF4B4B; 
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        box-shadow: 0px 10px 20px rgba(0,0,0,0.05);
+    }
+    .plan-card {
+        padding: 20px;
+        border-radius: 10px;
+        background-color: #ffffff;
+        margin-bottom: 10px;
+        border: 1px solid #e0e0e0;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- HELPER FUNCTIONS ---
+# --- WEATHER ENGINE ---
 def get_weather(state):
     coords = {
         "Selangor": (3.07, 101.51), "W.P. Kuala Lumpur": (3.13, 101.68),
@@ -51,94 +57,120 @@ def get_weather(state):
         data = requests.get(url).json()
         temp = data['current_weather']['temperature']
         code = data['current_weather']['weathercode']
-        condition = "Sunny" if code == 0 else "Cloudy" if code < 51 else "Raining"
+        condition = "Clear Skies" if code == 0 else "Cloudy" if code < 51 else "Rainy"
         return f"{temp}°C", condition
     except:
         return "N/A", "Unknown"
 
 # --- SIDEBAR ---
-st.sidebar.header("👤 Personal Profile")
-name = st.sidebar.text_input("Name", placeholder="e.g. Aisar")
-age = st.sidebar.number_input("Age", min_value=0, max_value=120, value=25)
-career = st.sidebar.text_input("Industry", placeholder="e.g. Tech")
+st.sidebar.header("👤 Your Profile")
+name = st.sidebar.text_input("Full Name", placeholder="e.g. Aisar")
+age = st.sidebar.number_input("Current Age", min_value=0, max_value=120, value=25)
+career = st.sidebar.text_input("Current Industry", placeholder="e.g. Data Science / Finance")
 
 malaysian_states = ["Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "W.P. Kuala Lumpur", "W.P. Labuan", "W.P. Putrajaya"]
-location = st.sidebar.selectbox("Location", options=sorted(malaysian_states))
+location = st.sidebar.selectbox("Home State", options=sorted(malaysian_states))
 
-dream = st.sidebar.text_area("Your 5-Year Goal")
+dream = st.sidebar.text_area("The 5-Year Grand Vision", placeholder="Describe exactly what your life looks like in 5 years...")
 
-# --- TOP SECTION: DATE, TIME & WEATHER ---
+# --- HEADER SECTION ---
 now = datetime.now()
-current_time = now.strftime("%H:%M")
+current_time = now.strftime("%I:%M %p")
 current_date = now.strftime("%A, %d %B %Y")
 temp, condition = get_weather(location)
 
-# English Greetings
 hour = now.hour
-if hour < 12: greeting = "Good Morning ☀️"
-elif hour < 17: greeting = "Good Afternoon 🌤️"
-else: greeting = "Good Evening 🌙"
+greeting = "Good Morning ☀️" if hour < 12 else "Good Afternoon 🌤️" if hour < 17 else "Good Evening 🌙"
 
-# Header Layout
 t1, t2 = st.columns([2, 1])
 with t1:
     st.title(f"{greeting}, {name if name else 'Visionary'}!")
-    st.subheader("🚀 Visionary 2030: Your 5-Year Blueprint")
+    st.markdown(f"### 🚀 Welcome to your future. \nToday is the first day of your next 5 years.")
 with t2:
     st.markdown(f"""
     <div class="weather-box">
         📅 <b>{current_date}</b><br>
-        ⏰ <b>Local Time: {current_time}</b><br>
+        ⏰ <b>Time: {current_time}</b><br>
         🌡️ <b>{location}: {temp} ({condition})</b>
     </div>
     """, unsafe_allow_html=True)
 
 st.divider()
 
-# --- MAIN LOGIC ---
+# --- MAIN ENGINE ---
 if name and career and dream:
     col1, col2 = st.columns([1, 1], gap="large")
 
     with col1:
-        st.subheader("🎯 Strategic Focus")
+        st.subheader("🎯 Life Stage Analysis")
         if age < 25:
-            focus = "The Foundation Phase: Focus on 'Skill-Stacking' and networking."
+            stage = "The Exploration & Skill-Stacking Phase"
+            desc = "You are in the high-energy season. Your goal is to acquire as many 'Meta-Skills' (coding, sales, writing) as possible. Don't fear failure; fear stagnation."
         elif age < 40:
-            focus = "The Acceleration Phase: Build deep expertise and lead projects."
+            stage = "The Acceleration & Leverage Phase"
+            desc = "This is your prime earning window. Focus on moving from 'selling time' to 'owning systems.' Use your expertise in your industry to lead and scale."
         else:
-            focus = "The Legacy Phase: Optimize systems and mentor the next generation."
-        st.info(focus)
-        st.write(f"Today is a great day to work on this, given the {condition.lower()} weather in {location}!")
+            stage = "The Legacy & Freedom Phase"
+            desc = "Prioritize high-impact work and mentoring. Your 5-year goal should center on building freedom—both financial and time-based."
+        
+        st.info(f"**{stage}**\n\n{desc}")
 
     with col2:
-        st.subheader("💭 Your Dream")
+        st.subheader("💭 The Manifested Goal")
         st.success(f"**“{dream}”**")
+        st.write(f"This vision is achievable. The climate in {location} today is {condition.lower()}, but your internal climate is purely determined by your discipline.")
 
     st.divider()
 
-    # --- ROADMAP ---
-    st.header("🗺️ Your Detailed 60-Month Roadmap")
-    with st.expander("📅 Years 1–2: Mastery", expanded=True):
-        st.write(f"Focus on becoming a top performer in **{career}**. Start building your 'Vision Fund' and find 3 mentors.")
-    with st.expander("📅 Years 3–4: Scaling"):
-        st.write(f"Transition to leadership. Your goal is to make your dream 50% of your daily reality.")
-    with st.expander("📅 Year 5: Realization"):
-        st.write(f"The 'Big Leap'. Execute your master plan and look back at your progress since {now.year}.")
+    # --- THE DETAILED ROADMAP ---
+    st.header("🗺️ The Strategic 60-Month Roadmap")
 
-    # --- MOTIVATION ---
+    # Year 1-2
+    with st.expander("📅 Years 1 & 2: Building the Unshakable Foundation", expanded=True):
+        st.markdown(f"""
+        * **Intensive Skill Mastery:** Spend 10 hours a week outside of work mastering the top 3 skills needed in **{career}**.
+        * **The Vision Fund:** Set up a dedicated savings account. Aim to have 6 months of living expenses by the end of Year 2 to provide "Risk Capital."
+        * **Network Expansion:** Connect with at least 2 people a month who are already living your dream. In {location}, seek out local meetups or digital communities.
+        * **Identity Shift:** Stop saying "I want to be..." and start saying "I am a..." Document your progress on LinkedIn to build a professional brand.
+        """)
+
+    # Year 3-4
+    with st.expander("📅 Years 3 & 4: Scaling and Market Domination"):
+        st.markdown(f"""
+        * **Leverage & Authority:** Shift from being the person who 'does' to the person who 'leads.' Seek out management roles or launch your own consultancy.
+        * **Revenue Diversification:** Create a side income stream related to **{career}**. Your goal is to have your 'side' income cover 30% of your expenses by Year 4.
+        * **Systemization:** Start automating your life. Use tools, delegating, or software to free up your mental energy for the 'Big Leap' in Year 5.
+        * **Health & Energy:** Optimize your physical performance. You cannot run a marathon in the final year if your engine is broken.
+        """)
+
+    # Year 5
+    with st.expander("📅 Year 5: The Grand Execution & Realization"):
+        st.markdown(f"""
+        * **The Transition:** This is the year you move full-time into your dream of **"{dream}"**. Whether it's a new company, a business launch, or a lifestyle shift—it happens now.
+        * **Harvesting Results:** The networking and branding you did in Year 1-2 now pays off. Opportunities should start seeking you out, rather than you chasing them.
+        * **Wealth Optimization:** Move from 'Saving' to 'Investing.' Ensure your assets are working as hard as you did for the last 4 years.
+        * **The Next Peak:** Spend the final 3 months of Year 5 designing your 10-year vision. You have arrived; now look further.
+        """)
+
+    # --- UPLIFTING MOTIVATION ---
     st.divider()
-    if st.button("🔥 Ignite My Motivation 🔥"):
+    if st.button("🔥 UNLEASH MOTIVATION 🔥"):
         st.balloons()
-        msgs = [
-            f"Listen {name}, it's {current_time}. Most people are sleeping on their dreams; you are planning yours. That alone makes you a winner.",
-            f"The {condition.lower()} weather in {location} is just the background. Your internal fire is what matters. Get to work!",
-            f"Five years from now, you will arrive. The question is: Where? Stick to this plan."
+        
+        motivations = [
+            f"**Listen, {name}.** Right now, it's {current_time}. Most people are waiting for 'one day' to start. They are waiting for the perfect weather in {location} or the perfect economy. But you? You just built a map. You have the industry knowledge of **{career}** and a hunger for **{dream}**. The version of you that exists in 5 years is looking back at you right now, thanking you for not giving up today. You aren't just a dreamer; you're an architect. **Now, build it.**",
+            
+            f"**{name}, the world is loud, but your vision must be louder.** In 60 months, you will be {age + 5} years old. Time is the only resource we can't buy back. Do not waste another second doubting if you are capable of achieving **{dream}**. You were given that dream because you have the capacity to fulfill it. Take that first step in {location} today. Small, boring, daily wins are the bricks that build empires. **Go get yours.**",
+            
+            f"**This is your wake-up call, {name}.** The path to **{dream}** isn't a straight line—it's a battlefield. There will be rainy days in {location} and moments of doubt in your **{career}** journey. But remember: a diamond is just a piece of charcoal that handled stress exceptionally well. You are in your {stage.lower()}. This is your time to shine. Don't settle for a life that is less than the one you are capable of living. **The future belongs to the bold.**"
         ]
-        st.markdown(f"### ⚡ Message:")
-        st.write(random.choice(msgs))
+        
+        st.markdown(f"### ⚡ A Personal Message for You:")
+        st.info(random.choice(motivations))
+        st.caption("“The best way to predict the future is to create it.”")
 
 else:
-    st.warning("👈 Enter your details in the sidebar to begin!")
+    st.warning("👈 The roadmap to 2030 is ready. Fill in your details on the left to unlock it!")
 
 st.markdown("---")
-st.markdown("<p style='text-align: center;'>Built for Visionaries 🚀</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #7f8c8d;'>Built with 🚀 for Visionaries | Keep Pushing.</p>", unsafe_allow_html=True)
