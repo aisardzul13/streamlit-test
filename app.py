@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS
+# Custom CSS with Fixed Font Color
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -20,16 +20,21 @@ st.markdown("""
         border: none; transition: 0.3s;
     }
     .stButton>button:hover { background-color: #ff3333; color: white; }
+    
+    /* Fixed the visibility here by adding a dark text color */
     .weather-box {
-        padding: 15px; border-radius: 15px; background: #ffffff;
-        border-left: 5px solid #FF4B4B; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        padding: 15px; 
+        border-radius: 15px; 
+        background-color: #ffffff;
+        color: #31333F; 
+        border-left: 5px solid #FF4B4B; 
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- HELPER FUNCTIONS ---
 def get_weather(state):
-    # Mapping Malaysian states to approximate lat/lon for Open-Meteo API
     coords = {
         "Selangor": (3.07, 101.51), "W.P. Kuala Lumpur": (3.13, 101.68),
         "Johor": (1.48, 103.74), "Pulau Pinang": (5.41, 100.32),
@@ -46,7 +51,6 @@ def get_weather(state):
         data = requests.get(url).json()
         temp = data['current_weather']['temperature']
         code = data['current_weather']['weathercode']
-        # Simple weather code mapping
         condition = "Sunny" if code == 0 else "Cloudy" if code < 51 else "Raining"
         return f"{temp}°C", condition
     except:
@@ -69,11 +73,11 @@ current_time = now.strftime("%H:%M")
 current_date = now.strftime("%A, %d %B %Y")
 temp, condition = get_weather(location)
 
-# Dynamic Greeting
+# English Greetings
 hour = now.hour
-if hour < 12: greeting = "Selamat Pagi ☀️"
-elif hour < 17: greeting = "Selamat Tengahari 🌤️"
-else: greeting = "Selamat Malam 🌙"
+if hour < 12: greeting = "Good Morning ☀️"
+elif hour < 17: greeting = "Good Afternoon 🌤️"
+else: greeting = "Good Evening 🌙"
 
 # Header Layout
 t1, t2 = st.columns([2, 1])
@@ -83,9 +87,9 @@ with t1:
 with t2:
     st.markdown(f"""
     <div class="weather-box">
-        <b>📅 {current_date}</b><br>
-        <b>⏰ Local Time: {current_time}</b><br>
-        <b>🌡️ {location}: {temp} ({condition})</b>
+        📅 <b>{current_date}</b><br>
+        ⏰ <b>Local Time: {current_time}</b><br>
+        🌡️ <b>{location}: {temp} ({condition})</b>
     </div>
     """, unsafe_allow_html=True)
 
@@ -98,7 +102,7 @@ if name and career and dream:
     with col1:
         st.subheader("🎯 Strategic Focus")
         if age < 25:
-            focus = "The Foundation Phase: Focus on 'Skill-Stacking' and networking in KL."
+            focus = "The Foundation Phase: Focus on 'Skill-Stacking' and networking."
         elif age < 40:
             focus = "The Acceleration Phase: Build deep expertise and lead projects."
         else:
@@ -107,7 +111,7 @@ if name and career and dream:
         st.write(f"Today is a great day to work on this, given the {condition.lower()} weather in {location}!")
 
     with col2:
-        st.subheader("💭 The North Star")
+        st.subheader("💭 Your Dream")
         st.success(f"**“{dream}”**")
 
     st.divider()
@@ -117,7 +121,7 @@ if name and career and dream:
     with st.expander("📅 Years 1–2: Mastery", expanded=True):
         st.write(f"Focus on becoming a top performer in **{career}**. Start building your 'Vision Fund' and find 3 mentors.")
     with st.expander("📅 Years 3–4: Scaling"):
-        st.write(f"Transition to leadership. Your goal is to make **{dream}** 50% of your daily reality.")
+        st.write(f"Transition to leadership. Your goal is to make your dream 50% of your daily reality.")
     with st.expander("📅 Year 5: Realization"):
         st.write(f"The 'Big Leap'. Execute your master plan and look back at your progress since {now.year}.")
 
@@ -126,9 +130,9 @@ if name and career and dream:
     if st.button("🔥 Ignite My Motivation 🔥"):
         st.balloons()
         msgs = [
-            f"Listen {name}, it's {current_time} on a {now.strftime('%A')}. Most people are scrolling; you are planning. That alone makes you dangerous. Don't stop.",
-            f"The {condition.lower()} weather in {location} today is just a backdrop. Your internal fire for '{dream}' is what matters. Get to work.",
-            f"Five years from now, you will arrive. The question is: Where? Stick to this plan and you'll arrive exactly where you want to be."
+            f"Listen {name}, it's {current_time}. Most people are sleeping on their dreams; you are planning yours. That alone makes you a winner.",
+            f"The {condition.lower()} weather in {location} is just the background. Your internal fire is what matters. Get to work!",
+            f"Five years from now, you will arrive. The question is: Where? Stick to this plan."
         ]
         st.markdown(f"### ⚡ Message:")
         st.write(random.choice(msgs))
@@ -137,4 +141,4 @@ else:
     st.warning("👈 Enter your details in the sidebar to begin!")
 
 st.markdown("---")
-st.markdown("<p style='text-align: center;'>Built for Malaysian Dreamers 🇲🇾</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Built for Visionaries 🚀</p>", unsafe_allow_html=True)
