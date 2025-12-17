@@ -3,7 +3,7 @@ import pandas as pd
 
 st.set_page_config(page_title="CSV Data Explorer/Discovery", layout="wide")
 
-st.title("📊 CSV Data Explorer")
+st.title("📊 CSV Data Explorer/Discovery")
 
 uploaded_file = st.file_uploader("Upload a CSV file", type=["csv"])
 
