@@ -6,122 +6,146 @@ from datetime import datetime
 from fpdf import FPDF
 
 # --- API CONFIGURATION ---
-# Ensure your library is updated to avoid the 404 error
+# Replace with your actual API key if needed
 GEMINI_API_KEY = "AIzaSyDPbHNSw_1Qz6_XsMKaoyT8oTNAohznFmE"
 genai.configure(api_key=GEMINI_API_KEY)
-
-# Use the stable model string
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # Page configuration
-st.set_page_config(
-    page_title="Visionary AI | 5-Year Life Planner",
-    page_icon="🤖",
-    layout="wide"
-)
+st.set_page_config(page_title="Visionary AI 3.1", page_icon="🔥", layout="wide")
 
-# Custom CSS
+# Initialize Session States
+if "ai_plan" not in st.session_state: st.session_state.ai_plan = ""
+if "chat_history" not in st.session_state: st.session_state.chat_history = []
+if "tasks" not in st.session_state: st.session_state.tasks = []
+
+# --- CUSTOM CSS ---
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
     .stButton>button {
-        width: 100%; border-radius: 25px; height: 3.5em;
-        background-color: #FF4B4B; color: white; font-weight: bold;
-        border: none; transition: 0.3s;
+        width: 100%; border-radius: 20px; height: 3em;
+        background-color: #FF4B4B; color: white; font-weight: bold; border: none;
     }
-    .stButton>button:hover { background-color: #ff3333; color: white; box-shadow: 0px 4px 15px rgba(255, 75, 75, 0.4); }
-    
     .weather-box {
-        padding: 20px; 
-        border-radius: 15px; 
-        background-color: #ffffff;
-        color: #1E1E1E; /* FIXED: Dark color so you can see the text! */
+        padding: 15px; border-radius: 15px; background-color: #ffffff;
+        color: #1E1E1E; /* Dark text for visibility */
         border-left: 5px solid #FF4B4B; 
-        box-shadow: 0px 10px 20px rgba(0,0,0,0.05);
+        box-shadow: 0px 5px 15px rgba(0,0,0,0.05);
     }
     </style>
-    """, unsafe_allow_html=True) # FIXED: changed allow_items to allow_html
-
-# --- HELPER FUNCTIONS ---
-def get_weather(state):
-    coords = {
-        "Selangor": (3.07, 101.51), "W.P. Kuala Lumpur": (3.13, 101.68),
-        "Johor": (1.48, 103.74), "Pulau Pinang": (5.41, 100.32),
-        "Sabah": (5.97, 116.07), "Sarawak": (1.55, 110.33),
-        "Kedah": (6.12, 100.36), "Kelantan": (6.12, 102.23),
-        "Melaka": (2.18, 102.24), "Negeri Sembilan": (2.72, 101.94),
-        "Pahang": (3.81, 103.32), "Perak": (4.59, 101.09),
-        "Perlis": (6.44, 100.20), "Terengganu": (5.33, 103.13),
-        "W.P. Labuan": (5.28, 115.24), "W.P. Putrajaya": (2.92, 101.68)
-    }
-    lat, lon = coords.get(state, (3.13, 101.68))
-    try:
-        url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=True"
-        data = requests.get(url).json()
-        temp = data['current_weather']['temperature']
-        return f"{temp}°C", "Live"
-    except:
-        return "N/A", "Unknown"
-
-def generate_pdf(name, plan_text):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", 'B', 16)
-    pdf.cell(200, 10, txt=f"Visionary 2030: {name}'s Blueprint", ln=True, align='C')
-    pdf.ln(10)
-    pdf.set_font("Arial", '', 11)
-    # Handle characters that might not exist in standard PDF fonts
-    clean_text = plan_text.encode('latin-1', 'ignore').decode('latin-1')
-    pdf.multi_cell(0, 10, txt=clean_text)
-    return pdf.output(dest='S').encode('latin-1')
-
-# --- SIDEBAR ---
-st.sidebar.header("👤 Your Profile")
-name = st.sidebar.text_input("Full Name")
-age = st.sidebar.number_input("Current Age", min_value=1, value=25)
-career = st.sidebar.text_input("Current Industry")
-location = st.sidebar.selectbox("Home State", sorted(["Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "W.P. Kuala Lumpur", "W.P. Labuan", "W.P. Putrajaya"]))
-dream = st.sidebar.text_area("The 5-Year Grand Vision")
-
-# --- HEADER ---
-now = datetime.now()
-temp, condition = get_weather(location)
-
-t1, t2 = st.columns([2, 1])
-with t1:
-    st.title(f"🤖 AI Life Architect")
-    st.subheader(f"Welcome, {name if name else 'Visionary'}!")
-with t2:
-    st.markdown(f"""
-    <div class="weather-box">
-        📅 <b>{now.strftime('%A, %d %B')}</b><br>
-        ⏰ <b>{now.strftime('%I:%M %p')}</b><br>
-        🌡️ <b>{location}: {temp}</b>
-    </div>
     """, unsafe_allow_html=True)
 
+# --- WEATHER ENGINE ---
+def get_weather(state):
+    coords = {"Selangor": (3.07, 101.51), "W.P. Kuala Lumpur": (3.13, 101.68), "Johor": (1.48, 103.74), "Pulau Pinang": (5.41, 100.32), "Sabah": (5.97, 116.07), "Sarawak": (1.55, 110.33)}
+    lat, lon = coords.get(state, (3.13, 101.68))
+    try:
+        data = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=True").json()
+        return f"{data['current_weather']['temperature']}°C"
+    except: return "N/A"
+
+# --- SIDEBAR: BLANK INPUTS ---
+st.sidebar.title("🛠️ Control Center")
+name = st.sidebar.text_input("Full Name", value="", placeholder="Enter your name...")
+age = st.sidebar.number_input("Current Age", min_value=0, max_value=120, value=0)
+career = st.sidebar.text_input("Current Industry/Job", value="", placeholder="e.g. Graphic Designer")
+location = st.sidebar.selectbox("Home State", ["Selangor", "W.P. Kuala Lumpur", "Johor", "Pulau Pinang", "Sabah", "Sarawak", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Terengganu"])
+vibe = st.sidebar.selectbox("AI Personality Mode", ["Supportive Coach", "Strict Disciplinarian", "Financial Strategist"])
+dream = st.sidebar.text_area("Your 5-Year Master Goal", value="", placeholder="What is your ultimate vision for 2030?")
+
+# --- TOP BAR ---
+temp = get_weather(location)
+st.title("🚀 Visionary AI 3.1")
+st.markdown(f"**{datetime.now().strftime('%d %B %Y')} | Local Weather in {location}: {temp}**")
 st.divider()
 
-# --- GENERATION ---
-if st.sidebar.button("✨ GENERATE AI BLUEPRINT ✨"):
-    if name and career and dream:
-        with st.spinner("Consulting the AI..."):
-            try:
-                prompt = f"Plan a 5-year roadmap for {name}, a {age} year old in {career}, living in {location}. Their goal is {dream}. Provide specific Malaysian context."
-                response = model.generate_content(prompt)
-                st.session_state.ai_plan = response.text
-            except Exception as e:
-                st.error(f"AI Error: {e}")
-    else:
-        st.error("Please fill in all sidebar fields!")
+# --- MAIN LAYOUT ---
+tab1, tab2, tab3 = st.tabs(["📋 My Blueprint", "💬 AI Chatbot", "✅ Goal Tracker"])
 
-if "ai_plan" in st.session_state:
-    st.markdown(st.session_state.ai_plan)
+# --- TAB 1: THE BLUEPRINT ---
+with tab1:
+    if st.sidebar.button("✨ GENERATE MY FUTURE ✨"):
+        if not name or not career or not dream or age == 0:
+            st.warning("⚠️ Please fill in all profile details in the sidebar first!")
+        else:
+            vibe_prompts = {
+                "Supportive Coach": "Be empathetic, warm, and focus on steady growth and mental well-being.",
+                "Strict Disciplinarian": "Be blunt, no-nonsense, and focus on hard work and discipline. Call out laziness.",
+                "Financial Strategist": "Focus on ROI, capital accumulation, and market trends in Malaysia."
+            }
+            
+            prompt = f"You are a {vibe}. {vibe_prompts[vibe]} Create a professional 5-year roadmap for {name}, age {age}, working in {career}, based in {location}, Malaysia. Goal: {dream}. Use headers and bullets."
+            
+            with st.spinner("Gemini is architecting your life..."):
+                try:
+                    response = model.generate_content(prompt)
+                    st.session_state.ai_plan = response.text
+                except Exception as e:
+                    st.error(f"Error connecting to AI: {e}")
+
+    if st.session_state.ai_plan:
+        st.markdown(st.session_state.ai_plan)
+        
+        # PDF Generation
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", 'B', 14)
+        pdf.cell(200, 10, txt=f"Visionary 2030: {name}'s Plan", ln=True, align='C')
+        pdf.set_font("Arial", size=11)
+        clean_text = st.session_state.ai_plan.encode('latin-1', 'ignore').decode('latin-1')
+        pdf.multi_cell(0, 10, txt=clean_text)
+        
+        st.download_button("📄 Download PDF Blueprint", data=pdf.output(dest='S').encode('latin-1'), file_name=f"{name}_Blueprint.pdf")
+    else:
+        st.info("The canvas is empty. Fill in your details in the sidebar and click 'Generate' to see your future.")
+
+# --- TAB 2: AI CHAT ---
+with tab2:
+    st.subheader("💬 Deep Dive Consultation")
+    if st.session_state.ai_plan:
+        for chat in st.session_state.chat_history:
+            with st.chat_message(chat["role"]):
+                st.markdown(chat["content"])
+
+        if user_input := st.chat_input("Ask a follow-up question..."):
+            st.session_state.chat_history.append({"role": "user", "content": user_input})
+            with st.chat_message("user"): st.markdown(user_input)
+            
+            chat_context = f"Context: You just generated this 5-year plan for {name}: {st.session_state.ai_plan}. User asks: {user_input}"
+            ai_response = model.generate_content(chat_context).text
+            
+            with st.chat_message("assistant"): st.markdown(ai_response)
+            st.session_state.chat_history.append({"role": "assistant", "content": ai_response})
+    else:
+        st.warning("Generate your blueprint first to unlock the AI Consultant.")
+
+# --- TAB 3: GOAL TRACKER ---
+with tab3:
+    st.subheader("🎯 Goal Execution Board")
     
-    pdf_bytes = generate_pdf(name, st.session_state.ai_plan)
-    st.download_button(
-        label="📄 Download Blueprint (PDF)",
-        data=pdf_bytes,
-        file_name=f"{name}_Vision_2030.pdf",
-        mime="application/pdf"
-    )
+    t_col1, t_col2 = st.columns([0.8, 0.2])
+    new_task = t_col1.text_input("New Milestone:", placeholder="e.g. Complete my first coding cert")
+    if t_col2.button("➕ Add Task"):
+        if new_task:
+            st.session_state.tasks.append({"task": new_task, "done": False})
+            st.rerun()
+
+    st.write("---")
+    for i, task in enumerate(st.session_state.tasks):
+        cols = st.columns([0.1, 0.8, 0.1])
+        is_done = cols[0].checkbox("", value=task["done"], key=f"task_check_{i}")
+        st.session_state.tasks[i]["done"] = is_done
+        
+        if is_done:
+            cols[1].markdown(f"~~{task['task']}~~")
+        else:
+            cols[1].write(task["task"])
+            
+        if cols[2].button("🗑️", key=f"task_del_{i}"):
+            st.session_state.tasks.pop(i)
+            st.rerun()
+
+# --- CUSTOM FOOTER ---
+st.markdown("---")
+st.markdown("<p style='text-align: center; color: grey;'>aisardzul | Built for the Visionaries | 2025-2030</p>", unsafe_allow_html=True)
