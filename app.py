@@ -2,6 +2,8 @@ import streamlit as st
 import random
 import requests
 from datetime import datetime
+from fpdf import FPDF
+import base64
 
 # Page configuration
 st.set_page_config(
@@ -10,7 +12,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for a professional, readable UI
+# Custom CSS
 st.markdown("""
     <style>
     .main { background-color: #f8f9fa; }
@@ -29,15 +31,53 @@ st.markdown("""
         border-left: 5px solid #FF4B4B; 
         box-shadow: 0px 10px 20px rgba(0,0,0,0.05);
     }
-    .plan-card {
-        padding: 20px;
-        border-radius: 10px;
-        background-color: #ffffff;
-        margin-bottom: 10px;
-        border: 1px solid #e0e0e0;
-    }
     </style>
     """, unsafe_allow_html=True)
+
+# --- PDF GENERATOR FUNCTION ---
+def generate_pdf(name, age, career, location, dream, roadmap):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Header
+    pdf.set_font("Arial", 'B', 20)
+    pdf.set_text_color(255, 75, 75)
+    pdf.cell(200, 10, txt="VISIONARY 2030: STRATEGIC BLUEPRINT", ln=True, align='C')
+    pdf.ln(10)
+    
+    # Profile Section
+    pdf.set_font("Arial", 'B', 14)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(200, 10, txt="PERSONAL PROFILE", ln=True)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(200, 10, txt=f"Name: {name}", ln=True)
+    pdf.cell(200, 10, txt=f"Age: {age} | Industry: {career}", ln=True)
+    pdf.cell(200, 10, txt=f"Location: {location}", ln=True)
+    pdf.ln(5)
+    
+    # The Dream
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(200, 10, txt="THE GRAND VISION", ln=True)
+    pdf.set_font("Arial", 'I', 12)
+    pdf.multi_cell(0, 10, txt=f'"{dream}"')
+    pdf.ln(5)
+    
+    # The Roadmap
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(200, 10, txt="5-YEAR STRATEGIC ROADMAP", ln=True)
+    
+    for year, details in roadmap.items():
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(200, 10, txt=year, ln=True)
+        pdf.set_font("Arial", '', 11)
+        pdf.multi_cell(0, 7, txt=details)
+        pdf.ln(3)
+    
+    pdf.set_font("Arial", 'I', 10)
+    pdf.set_text_color(128, 128, 128)
+    pdf.cell(200, 10, txt=f"Generated on {datetime.now().strftime('%d %B %Y')}", ln=True, align='C')
+    
+    return pdf.output(dest='S').encode('latin-1')
 
 # --- WEATHER ENGINE ---
 def get_weather(state):
@@ -66,14 +106,14 @@ def get_weather(state):
 st.sidebar.header("👤 Your Profile")
 name = st.sidebar.text_input("Full Name", placeholder="e.g. Aisar")
 age = st.sidebar.number_input("Current Age", min_value=0, max_value=120, value=25)
-career = st.sidebar.text_input("Current Industry", placeholder="e.g. Data Science / Finance")
+career = st.sidebar.text_input("Current Industry", placeholder="e.g. Software Engineering")
 
 malaysian_states = ["Johor", "Kedah", "Kelantan", "Melaka", "Negeri Sembilan", "Pahang", "Perak", "Perlis", "Pulau Pinang", "Sabah", "Sarawak", "Selangor", "Terengganu", "W.P. Kuala Lumpur", "W.P. Labuan", "W.P. Putrajaya"]
 location = st.sidebar.selectbox("Home State", options=sorted(malaysian_states))
 
-dream = st.sidebar.text_area("The 5-Year Grand Vision", placeholder="Describe exactly what your life looks like in 5 years...")
+dream = st.sidebar.text_area("The 5-Year Grand Vision")
 
-# --- HEADER SECTION ---
+# --- HEADER ---
 now = datetime.now()
 current_time = now.strftime("%I:%M %p")
 current_date = now.strftime("%A, %d %B %Y")
@@ -85,7 +125,7 @@ greeting = "Good Morning ☀️" if hour < 12 else "Good Afternoon 🌤️" if h
 t1, t2 = st.columns([2, 1])
 with t1:
     st.title(f"{greeting}, {name if name else 'Visionary'}!")
-    st.markdown(f"### 🚀 Welcome to your future. \nToday is the first day of your next 5 years.")
+    st.markdown("### 🚀 Your journey to 2030 begins today.")
 with t2:
     st.markdown(f"""
     <div class="weather-box">
@@ -97,80 +137,76 @@ with t2:
 
 st.divider()
 
-# --- MAIN ENGINE ---
+# --- CONTENT ENGINE ---
 if name and career and dream:
-    col1, col2 = st.columns([1, 1], gap="large")
+    # Defining the Roadmap Content for Display & PDF
+    roadmap_content = {
+        "YEARS 1 & 2: THE FOUNDATION": (
+            "- Intensive Skill Mastery: Dedicate 10+ hours weekly to mastering core industry skills.\n"
+            "- Financial Runway: Build a 6-month 'Vision Fund' to enable future risk-taking.\n"
+            "- Strategic Networking: Connect with 2 mentors monthly who are already where you want to be.\n"
+            "- Brand Building: Document your learning journey publicly (LinkedIn/Portfolio)."
+        ),
+        "YEARS 3 & 4: THE ACCELERATION": (
+            "- Authority Shift: Transition from 'doer' to 'leader' by taking on management or consultancy roles.\n"
+            "- Revenue Scaling: Launch a side income stream that leverages your primary expertise.\n"
+            "- Life Systemization: Automate administrative tasks to free up energy for high-level strategy.\n"
+            "- Physical Optimization: Peak your health to sustain the intensity of your 5th year leap."
+        ),
+        "YEAR 5: THE REALIZATION": (
+            "- The Grand Transition: Execute the full move into your vision (new business, C-suite, etc.).\n"
+            "- Harvest Season: Capitalize on the network and brand you have built over the last 48 months.\n"
+            "- Wealth Management: Move from active earning to passive investment strategies.\n"
+            "- Vision 2035: Set the trajectory for the next decade of your legacy."
+        )
+    }
 
+    col1, col2 = st.columns([1, 1], gap="large")
     with col1:
         st.subheader("🎯 Life Stage Analysis")
-        if age < 25:
-            stage = "The Exploration & Skill-Stacking Phase"
-            desc = "You are in the high-energy season. Your goal is to acquire as many 'Meta-Skills' (coding, sales, writing) as possible. Don't fear failure; fear stagnation."
-        elif age < 40:
-            stage = "The Acceleration & Leverage Phase"
-            desc = "This is your prime earning window. Focus on moving from 'selling time' to 'owning systems.' Use your expertise in your industry to lead and scale."
-        else:
-            stage = "The Legacy & Freedom Phase"
-            desc = "Prioritize high-impact work and mentoring. Your 5-year goal should center on building freedom—both financial and time-based."
-        
-        st.info(f"**{stage}**\n\n{desc}")
+        if age < 25: focus = "Exploration & Skill-Stacking. Build a massive foundation while stakes are low."
+        elif age < 40: focus = "Acceleration & Leverage. Shift from selling time to owning systems."
+        else: focus = "Legacy & Freedom. Focus on mentorship, impact, and high-level strategy."
+        st.info(focus)
 
     with col2:
         st.subheader("💭 The Manifested Goal")
         st.success(f"**“{dream}”**")
-        st.write(f"This vision is achievable. The climate in {location} today is {condition.lower()}, but your internal climate is purely determined by your discipline.")
 
     st.divider()
 
-    # --- THE DETAILED ROADMAP ---
+    # Roadmap Visual
     st.header("🗺️ The Strategic 60-Month Roadmap")
+    
+    for year, text in roadmap_content.items():
+        with st.expander(f"📅 {year}", expanded=(year.startswith("YEARS 1"))):
+            st.markdown(text)
 
-    # Year 1-2
-    with st.expander("📅 Years 1 & 2: Building the Unshakable Foundation", expanded=True):
-        st.markdown(f"""
-        * **Intensive Skill Mastery:** Spend 10 hours a week outside of work mastering the top 3 skills needed in **{career}**.
-        * **The Vision Fund:** Set up a dedicated savings account. Aim to have 6 months of living expenses by the end of Year 2 to provide "Risk Capital."
-        * **Network Expansion:** Connect with at least 2 people a month who are already living your dream. In {location}, seek out local meetups or digital communities.
-        * **Identity Shift:** Stop saying "I want to be..." and start saying "I am a..." Document your progress on LinkedIn to build a professional brand.
-        """)
-
-    # Year 3-4
-    with st.expander("📅 Years 3 & 4: Scaling and Market Domination"):
-        st.markdown(f"""
-        * **Leverage & Authority:** Shift from being the person who 'does' to the person who 'leads.' Seek out management roles or launch your own consultancy.
-        * **Revenue Diversification:** Create a side income stream related to **{career}**. Your goal is to have your 'side' income cover 30% of your expenses by Year 4.
-        * **Systemization:** Start automating your life. Use tools, delegating, or software to free up your mental energy for the 'Big Leap' in Year 5.
-        * **Health & Energy:** Optimize your physical performance. You cannot run a marathon in the final year if your engine is broken.
-        """)
-
-    # Year 5
-    with st.expander("📅 Year 5: The Grand Execution & Realization"):
-        st.markdown(f"""
-        * **The Transition:** This is the year you move full-time into your dream of **"{dream}"**. Whether it's a new company, a business launch, or a lifestyle shift—it happens now.
-        * **Harvesting Results:** The networking and branding you did in Year 1-2 now pays off. Opportunities should start seeking you out, rather than you chasing them.
-        * **Wealth Optimization:** Move from 'Saving' to 'Investing.' Ensure your assets are working as hard as you did for the last 4 years.
-        * **The Next Peak:** Spend the final 3 months of Year 5 designing your 10-year vision. You have arrived; now look further.
-        """)
-
-    # --- UPLIFTING MOTIVATION ---
+    # Export & Motivation Buttons
     st.divider()
-    if st.button("🔥 UNLEASH MOTIVATION 🔥"):
-        st.balloons()
-        
-        motivations = [
-            f"**Listen, {name}.** Right now, it's {current_time}. Most people are waiting for 'one day' to start. They are waiting for the perfect weather in {location} or the perfect economy. But you? You just built a map. You have the industry knowledge of **{career}** and a hunger for **{dream}**. The version of you that exists in 5 years is looking back at you right now, thanking you for not giving up today. You aren't just a dreamer; you're an architect. **Now, build it.**",
-            
-            f"**{name}, the world is loud, but your vision must be louder.** In 60 months, you will be {age + 5} years old. Time is the only resource we can't buy back. Do not waste another second doubting if you are capable of achieving **{dream}**. You were given that dream because you have the capacity to fulfill it. Take that first step in {location} today. Small, boring, daily wins are the bricks that build empires. **Go get yours.**",
-            
-            f"**This is your wake-up call, {name}.** The path to **{dream}** isn't a straight line—it's a battlefield. There will be rainy days in {location} and moments of doubt in your **{career}** journey. But remember: a diamond is just a piece of charcoal that handled stress exceptionally well. You are in your {stage.lower()}. This is your time to shine. Don't settle for a life that is less than the one you are capable of living. **The future belongs to the bold.**"
-        ]
-        
-        st.markdown(f"### ⚡ A Personal Message for You:")
-        st.info(random.choice(motivations))
-        st.caption("“The best way to predict the future is to create it.”")
+    m_col1, m_col2 = st.columns(2)
+    
+    with m_col1:
+        if st.button("🔥 UNLEASH MOTIVATION 🔥"):
+            st.balloons()
+            motivations = [
+                f"Listen {name}, it's {current_time}. While others are sleeping, you are building. The version of you in 5 years is already thanking you for not stopping today. Get after it!",
+                f"{name}, you didn't come this far just to come this far. '{dream}' isn't just a sentence—it's your future reality. Take the first step in {location} today!",
+                f"There are no rainy days for a man with a vision. Your discipline today in the {career} industry determines your freedom tomorrow. Own the day."
+            ]
+            st.info(random.choice(motivations))
+
+    with m_col2:
+        pdf_bytes = generate_pdf(name, age, career, location, dream, roadmap_content)
+        st.download_button(
+            label="📄 DOWNLOAD MY 5-YEAR BLUEPRINT (PDF)",
+            data=pdf_bytes,
+            file_name=f"{name}_Vision_2030.pdf",
+            mime="application/pdf"
+        )
 
 else:
-    st.warning("👈 The roadmap to 2030 is ready. Fill in your details on the left to unlock it!")
+    st.warning("👈 Enter your details in the sidebar to build your blueprint!")
 
 st.markdown("---")
-st.markdown("<p style='text-align: center; color: #7f8c8d;'>Built with 🚀 for Visionaries | Keep Pushing.</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center;'>Built for the Bold | Visionary 2030</p>", unsafe_allow_html=True)
