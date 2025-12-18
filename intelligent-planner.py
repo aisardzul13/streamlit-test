@@ -222,4 +222,4 @@ st.markdown(f"""
     <div style="text-align: center; color: #444; font-family: 'IBM Plex Mono'; font-size: 0.6rem; margin-top: 100px; letter-spacing: 5px;">
         AISARDZUL | PROJECT_VISIONARY | 2025-2030
     </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True) ##finish
