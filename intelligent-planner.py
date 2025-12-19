@@ -18,7 +18,7 @@ except KeyError as e:
 supabase: Client = create_client(url, key)
 
 genai.configure(api_key=gemini_api_key)
-# FIX 1: Corrected model name to 1.5
+# FIX: Corrected model name to 1.5
 model = genai.GenerativeModel('gemini-2.5-flash')
 
 # --- 3. PAGE CONFIG ---
@@ -70,7 +70,6 @@ def get_weather(state):
         return f"{data['current_weather']['temperature']}°C"
     except: return "N/A"
 
-# FIX 2: Corrected Indentation for save_to_cloud
 def save_to_cloud(name, career, roadmap, pdf_bytes):
     """Handles all Supabase uploads."""
     try:
