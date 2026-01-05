@@ -186,7 +186,9 @@ except KeyError as e:
     st.stop()
 
 # --- 2. INITIALIZE CONNECTIONS ---
-genai.configure(api_api_key=gemini_api_key)
+# genai.configure(api_api_key=gemini_api_key)
+# CHANGE IT TO THIS
+genai.configure(api_key=gemini_api_key)
 
 # CRITICAL FIX: Changed from 'gemini-2.5-flash' (does not exist) to 'gemini-1.5-flash'
 model = genai.GenerativeModel('gemini-2.5-flash')
