@@ -7,15 +7,15 @@ from fpdf import FPDF
 
 # --- 1. ACCESS SECRETS ---
 try:
-    # url = st.secrets["SUPABASE_URL"]
-    # key = st.secrets["SUPABASE_KEY"]
+    url = st.secrets["SUPABASE_URL"]
+    key = st.secrets["SUPABASE_KEY"]
     gemini_api_key = st.secrets["GEMINI_KEY"]
 except KeyError as e:
     st.error(f"Missing secret in secrets.toml: {e}")
     st.stop()
 
 # --- 2. INITIALIZE CONNECTIONS ---
-# supabase: Client = create_client(url, key)
+supabase: Client = create_client(url, key)
 
 genai.configure(api_key=gemini_api_key)
 # FIX: Corrected model name to 1.5
@@ -70,23 +70,23 @@ def get_weather(state):
         return f"{data['current_weather']['temperature']}°C"
     except: return "N/A"
 
-# def save_to_cloud(name, career, roadmap, pdf_bytes):
-#     """Handles all Supabase uploads."""
-#     try:
-#         # 1. Database Insert
-#         data = {"name": name, "career": career, "roadmap_text": roadmap}
-#         supabase.table("profiles").insert(data).execute()
+def save_to_cloud(name, career, roadmap, pdf_bytes):
+    """Handles all Supabase uploads."""
+    try:
+        # 1. Database Insert
+        data = {"name": name, "career": career, "roadmap_text": roadmap}
+        supabase.table("profiles").insert(data).execute()
 
-#         # 2. Storage Upload
-#         file_path = f"{name}_roadmap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-#         supabase.storage.from_("roadmaps").upload(
-#             path=file_path,
-#             file=pdf_bytes,
-#             file_options={"content-type": "application/pdf"}
-#         )
-#         st.success("Trajectory securely synced to cloud.")
-#     except Exception as e:
-#         st.error(f"Cloud Sync Error: {e}")
+        # 2. Storage Upload
+        file_path = f"{name}_roadmap_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        supabase.storage.from_("roadmaps").upload(
+            path=file_path,
+            file=pdf_bytes,
+            file_options={"content-type": "application/pdf"}
+        )
+        st.success("Trajectory securely synced to cloud.")
+    except Exception as e:
+        st.error(f"Cloud Sync Error: {e}")
 
 # --- 6. SIDEBAR ---
 with st.sidebar:
