@@ -7,15 +7,15 @@ from fpdf import FPDF
 
 # --- 1. ACCESS SECRETS ---
 try:
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
+    # url = st.secrets["SUPABASE_URL"]
+    # key = st.secrets["SUPABASE_KEY"]
     gemini_api_key = st.secrets["GEMINI_KEY"]
 except KeyError as e:
     st.error(f"Missing secret in secrets.toml: {e}")
     st.stop()
 
 # --- 2. INITIALIZE CONNECTIONS ---
-supabase: Client = create_client(url, key)
+# supabase: Client = create_client(url, key)
 
 genai.configure(api_key=gemini_api_key)
 # FIX: Corrected model name to 1.5
